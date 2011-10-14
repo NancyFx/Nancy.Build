@@ -24,8 +24,10 @@ class Git
     self.execute_command "commit -am \"#{message}\""
   end
 
-  def self.tag(tag)
-    self.execute_command "tag #{tag}"
+  def self.tag(tag, lightweight=true, *message)
+    messageParameter = "-m \"#{message}\"" if !message.empty?
+
+    self.execute_command "tag #{'-a' if !lightweight} #{tag} #{messageParameter}"
   end
 
   def self.prep_submodules()

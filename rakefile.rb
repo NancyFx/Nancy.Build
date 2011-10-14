@@ -32,7 +32,7 @@ namespace :nancy do
   task :tag_nancy, :version do |task, args|
     puts "Tagging Nancy"
 
-    Git.tag "v#{args.version}"
+    Git.tag "v#{args.version}", false, "Tagged v#{args.version}"
     Git.execute_command 'push --tags'
   end
 
