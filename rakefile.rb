@@ -1,6 +1,10 @@
-require "git"
+require './git'
+require 'rubygems'
+require 'albacore'
 
 namespace :nancy do
+  SHARED_ASSEMBLY_INFO = 'src/SharedAssemblyInfo.cs'
+
   sub_projects = [
       'Nancy.Bootstrappers.StructureMap',
       'Nancy.Bootstrappers.Unity'
@@ -30,14 +34,20 @@ namespace :nancy do
   end
 
   task :tag_nancy, :version do |task, args|
-    puts "Tagging Nancy"
+    puts "Updating Nancy version to v#{args.version} and creating tag"
 
-    Git.tag "v#{args.version}", false, "Tagged v#{args.version}"
-    Git.execute_command 'push --tags'
+    Dir.logged_chdir '../Nancy' do
+      Rake::Task['nancy:update_version'].invoke(args.version)
+      Git.add(SHARED_ASSEMBLY_INFO)
+      Git.commit("Updated SharedAssemblyInfo to v#{args.version}")
+
+      Git.tag "v#{args.version}", false, "Tagged v#{args.version}"
+      Git.push_tags
+    end
   end
 
   task :update_project, :project, :version do |task, args|
-    puts "Updating: #{args.project} to #{args.version}"
+    puts "Updating: #{args.project} to v#{args.version}"
 
     Dir.logged_chdir get_project_directory(args.project) do
       Git.prep_submodules
@@ -48,7 +58,8 @@ namespace :nancy do
         Git.checkout "v#{args.version}"
       end
 
-      Git.commit_all "Updated submodule to #{args.version}"
+      Git.commit_all "Updated submodule to tag: v#{args.version}"
+      Git.tag "v#{args.version}", false, "Tagged v#{args.version}"
     end
   end
 
@@ -61,8 +72,16 @@ namespace :nancy do
         puts "Updating: #{project}"
 
         Git.push 'origin/master'
+        Git.push_tags
       end
     end
+  end
+
+  desc "Updates #{SHARED_ASSEMBLY_INFO} version"
+  assemblyinfo :update_version, :version do |asm, args|
+      asm.input_file = SHARED_ASSEMBLY_INFO
+      asm.version = args.version if !args.version.nil?
+      asm.output_file = SHARED_ASSEMBLY_INFO
   end
 
   def get_project_directory(project)

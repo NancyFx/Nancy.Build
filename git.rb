@@ -9,11 +9,15 @@ class Git
   end
 
   def self.push(*branch)
-    self.execute_command "push #{branch}"
+    self.execute_command "push #{branch.first if !branch.empty?}"
   end
 
   def self.pull(*branch)
-    self.execute_command "pull #{branch}"
+    self.execute_command "pull #{branch.first if !branch.empty?}"
+  end
+
+  def self.add(files)
+    self.execute_command "add #{files}"
   end
 
   def self.commit(message)
@@ -25,9 +29,13 @@ class Git
   end
 
   def self.tag(tag, lightweight=true, *message)
-    messageParameter = "-m \"#{message}\"" if !message.empty?
+    messageParameter = "-m \"#{message.first}\"" if !message.empty?
 
     self.execute_command "tag #{'-a' if !lightweight} #{tag} #{messageParameter}"
+  end
+
+  def self.push_tags()
+    self.execute_command "push --tags"
   end
 
   def self.prep_submodules()
