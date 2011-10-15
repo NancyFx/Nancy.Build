@@ -29,9 +29,10 @@ class Git
   end
 
   def self.tag(tag, lightweight=true, *message)
-    messageParameter = "-m \"#{message.first}\"" if !message.empty?
+    message_parameter = ''
+    message_parameter = "-m \"#{message.first}\"" if !message.empty?
 
-    self.execute_command "tag #{'-a' if !lightweight} #{tag} #{messageParameter}"
+    self.execute_command "tag #{'-a' if !lightweight} #{tag} #{message_parameter}"
   end
 
   def self.push_tags()
