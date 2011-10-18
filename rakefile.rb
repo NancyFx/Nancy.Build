@@ -1,9 +1,11 @@
 require './git'
+require './executor'
 require 'rubygems'
 require 'albacore'
 
 namespace :nancy do
   SHARED_ASSEMBLY_INFO = 'src/SharedAssemblyInfo.cs'
+  NANCY_DIRECTORY = '../Nancy'
 
   sub_projects = [
       'Nancy.Bootstrappers.StructureMap',
@@ -36,7 +38,7 @@ namespace :nancy do
   task :tag_nancy, :version do |task, args|
     puts "Updating Nancy version to v#{args.version} and creating tag"
 
-    Dir.logged_chdir '../Nancy' do
+    Dir.logged_chdir NANCY_DIRECTORY do
       Rake::Task['nancy:update_version'].invoke(args.version)
       Git.add(SHARED_ASSEMBLY_INFO)
       Git.commit("Updated SharedAssemblyInfo to v#{args.version}")
@@ -73,6 +75,44 @@ namespace :nancy do
 
         Git.push 'origin/master'
         Git.push_tags
+      end
+    end
+  end
+
+  desc "Builds all nuget packages"
+  task :build_nugets do
+    puts "Building nugets"
+
+    Dir.logged_chdir NANCY_DIRECTORY do
+      puts "Building Nuget: Nancy"
+
+      Executor.execute_command("rake nuget_package")
+    end
+
+    sub_projects.each do |project|
+      Dir.logged_chdir get_project_directory(project) do
+        puts "Pushing Nugets: #{project}"
+
+        Executor.execute_command("rake nuget_package")
+      end
+    end
+  end
+
+  desc "Pushes all nuget packages using the specified API key"
+  task :push_nugets, :api_key do |task, args|
+    puts "Pushing nugets"
+
+    Dir.logged_chdir NANCY_DIRECTORY do
+      puts "Pushing Nuget: Nancy"
+
+      Executor.execute_command("rake nuget_publish[#{args.api_key}]")
+    end
+
+    sub_projects.each do |project|
+      Dir.logged_chdir get_project_directory(project) do
+        puts "Building Nugets: #{project}"
+
+        Executor.execute_command("rake nuget_publish[#{args.api_key}]")
       end
     end
   end
