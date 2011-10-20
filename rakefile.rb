@@ -2,10 +2,12 @@ require './git'
 require './executor'
 require 'rubygems'
 require 'albacore'
+require 'FileUtils'
 
 namespace :nancy do
   SHARED_ASSEMBLY_INFO = 'src/SharedAssemblyInfo.cs'
   NANCY_DIRECTORY = '../Nancy'
+  WORKING_DIRECTORY = 'Working'
 
   sub_projects = [
       'Nancy.Bootstrappers.StructureMap',
@@ -20,8 +22,15 @@ namespace :nancy do
     end
   end
 
+  desc "Creates the working directory and gets projects from GitHub"
+  task :get_projects do
+    puts "Deleting working folder" if File.exists? WORKING_DIRECTORY
+    FileUtils.rm_rf(WORKING_DIRECTORY)
+    Dir.mkdir(WORKING_DIRECTORY)
+  end
+
   desc "Prepares a release"
-  task :prep_release, :version do |task, args|
+  task :prep_release, [:version] => [:get_projects] do |task, args|
     if !args.version.nil?
       puts "Prepping #{args.version}"
 
