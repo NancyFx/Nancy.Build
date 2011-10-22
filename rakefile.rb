@@ -10,7 +10,7 @@ namespace :nancy do
   WORKING_DIRECTORY = 'Working'
   NANCY_DIRECTORY = "#{WORKING_DIRECTORY}/Nancy"
 
-  sub_projects = [
+  SUB_PROJECTS = [
       'Nancy.Bootstrappers.StructureMap',
       'Nancy.Bootstrappers.Unity'
   ]
@@ -33,7 +33,7 @@ namespace :nancy do
       puts "Getting projects from github account: #{BASE_GITHUB_PATH}"
       Git.clone(get_git_url('Nancy'))
 
-      sub_projects.each do |project|
+      SUB_PROJECTS.each do |project|
         Git.clone(get_git_url(project))
       end
     end
@@ -47,7 +47,7 @@ namespace :nancy do
       Rake::Task['nancy:tag_nancy'].invoke(args.version)
 
       puts "Updating sub projects.."
-      sub_projects.each do |project|
+      SUB_PROJECTS.each do |project|
         Rake::Task['nancy:update_project'].reenable
         Rake::Task['nancy:update_project'].invoke(project, args.version)
       end
@@ -88,7 +88,7 @@ namespace :nancy do
   task :push_subprojects do
     puts "Pushing subprojects.."
 
-    sub_projects.each do |project|
+    SUB_PROJECTS.each do |project|
       Dir.logged_chdir get_project_directory(project) do
         puts "Updating: #{project}"
 
@@ -108,7 +108,7 @@ namespace :nancy do
       Executor.execute_command("rake nuget_package")
     end
 
-    sub_projects.each do |project|
+    SUB_PROJECTS.each do |project|
       Dir.logged_chdir get_project_directory(project) do
         puts "Pushing Nugets: #{project}"
 
@@ -127,7 +127,7 @@ namespace :nancy do
       Executor.execute_command("rake nuget_publish[#{args.api_key}]")
     end
 
-    sub_projects.each do |project|
+    SUB_PROJECTS.each do |project|
       Dir.logged_chdir get_project_directory(project) do
         puts "Building Nugets: #{project}"
 
