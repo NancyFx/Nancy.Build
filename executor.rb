@@ -8,4 +8,8 @@ class Executor
         sh "#{command} #{args}"
     end
   end
+
+  def self.debug?()
+    @@debug
+  end
 end

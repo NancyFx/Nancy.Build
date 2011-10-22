@@ -4,6 +4,35 @@ require 'rubygems'
 require 'albacore'
 require 'FileUtils'
 
+task :default do
+  puts "Nancy Release Script"
+  puts
+  puts "** Usage **"
+  puts
+  puts "prep_release[version]"
+  puts
+  puts "\t* Grabs all the projects from GitHub"
+  puts "\t* Updates SharedAssemblyInfo with [version]"
+  puts "\t* Tags Nancy with [version] and pushes"
+  puts "\t* Updates all the subproject submodules to point to [version]"
+  puts "\t* Tags each subproject with [version] (but doesn't push)"
+  puts
+  puts "push_subprojects"
+  puts
+  puts "\t* Pushes all the updated subprojects"
+  puts
+  puts "build_nugets"
+  puts
+  puts "\t* Builds nugets for Nancy and all subprojects"
+  puts
+  puts "push_nugets[api_key]"
+  puts
+  puts "\t* Pushes and publishes nugets for Nancy and all subprojects"
+  puts "\t  using the given [api_key]"
+  puts
+  Rake::Task['nancy:dump_config'].invoke
+end
+
 namespace :nancy do
   BASE_GITHUB_PATH = 'git@github.com:grumpydev/'
   SHARED_ASSEMBLY_INFO = 'src/SharedAssemblyInfo.cs'
@@ -20,6 +49,18 @@ namespace :nancy do
       puts "Entering #{dir}"
       self.chdir(dir, &block)
       puts "Leaving #{dir} (Now: #{Dir.pwd})"
+    end
+  end
+
+  desc "Dumps the current config to the console"
+  task :dump_config do
+    puts "** Config **"
+    puts
+    puts "Base Github Path: \t#{BASE_GITHUB_PATH}"
+    puts "Debug Mode: \t\t#{Executor.debug?}"
+    puts "Subprojects:"
+    SUB_PROJECTS.each do |project|
+      puts "\t\t\t#{project}"
     end
   end
 
