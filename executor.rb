@@ -1,5 +1,5 @@
 class Executor
-  @@debug = true
+  @@debug = false
 
   def self.execute_command(command, args = "")
     if @@debug

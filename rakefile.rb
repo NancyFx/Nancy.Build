@@ -5,7 +5,7 @@ require 'albacore'
 require 'FileUtils'
 
 namespace :nancy do
-  BASE_GITHUB_PATH = 'https://github.com/NancyFx/'
+  BASE_GITHUB_PATH = 'git@github.com:grumpydev/'
   SHARED_ASSEMBLY_INFO = 'src/SharedAssemblyInfo.cs'
   WORKING_DIRECTORY = 'Working'
   NANCY_DIRECTORY = "#{WORKING_DIRECTORY}/Nancy"
@@ -29,12 +29,12 @@ namespace :nancy do
     FileUtils.rm_rf(WORKING_DIRECTORY)
     Dir.mkdir(WORKING_DIRECTORY)
 
-    puts "Getting projects from github account: #{BASE_GITHUB_PATH}"
-    Git.clone("#{BASE_GITHUB_PATH}Nancy")
-
     Dir.logged_chdir WORKING_DIRECTORY do
+      puts "Getting projects from github account: #{BASE_GITHUB_PATH}"
+      Git.clone(get_git_url('Nancy'))
+
       sub_projects.each do |project|
-        Git.clone("#{BASE_GITHUB_PATH}#{project}")
+        Git.clone(get_git_url(project))
       end
     end
   end
@@ -92,7 +92,7 @@ namespace :nancy do
       Dir.logged_chdir get_project_directory(project) do
         puts "Updating: #{project}"
 
-        Git.push 'origin/master'
+        Git.push 'origin master'
         Git.push_tags
       end
     end
@@ -141,6 +141,10 @@ namespace :nancy do
       asm.input_file = SHARED_ASSEMBLY_INFO
       asm.version = args.version if !args.version.nil?
       asm.output_file = SHARED_ASSEMBLY_INFO
+  end
+
+  def get_git_url(project)
+    "#{BASE_GITHUB_PATH}#{project}.git"
   end
 
   def get_project_directory(project)
