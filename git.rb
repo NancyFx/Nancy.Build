@@ -4,6 +4,10 @@ require './executor'
 class Git
   @@git_command = "git"
 
+  def self.clone(url)
+    Executor.execute_command @@git_command, "clone #{url}"
+  end
+
   def self.checkout(branch)
     Executor.execute_command @@git_command, "checkout #{branch}"
   end

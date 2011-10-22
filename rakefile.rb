@@ -5,9 +5,10 @@ require 'albacore'
 require 'FileUtils'
 
 namespace :nancy do
+  BASE_GITHUB_PATH = 'https://github.com/NancyFx/'
   SHARED_ASSEMBLY_INFO = 'src/SharedAssemblyInfo.cs'
-  NANCY_DIRECTORY = '../Nancy'
   WORKING_DIRECTORY = 'Working'
+  NANCY_DIRECTORY = "#{WORKING_DIRECTORY}/Nancy"
 
   sub_projects = [
       'Nancy.Bootstrappers.StructureMap',
@@ -27,6 +28,15 @@ namespace :nancy do
     puts "Deleting working folder" if File.exists? WORKING_DIRECTORY
     FileUtils.rm_rf(WORKING_DIRECTORY)
     Dir.mkdir(WORKING_DIRECTORY)
+
+    puts "Getting projects from github account: #{BASE_GITHUB_PATH}"
+    Git.clone("#{BASE_GITHUB_PATH}Nancy")
+
+    Dir.logged_chdir WORKING_DIRECTORY do
+      sub_projects.each do |project|
+        Git.clone("#{BASE_GITHUB_PATH}#{project}")
+      end
+    end
   end
 
   desc "Prepares a release"
@@ -134,6 +144,6 @@ namespace :nancy do
   end
 
   def get_project_directory(project)
-    "../#{project}"
+    "#{WORKING_DIRECTORY}/#{project}"
   end
 end
