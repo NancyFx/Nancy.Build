@@ -17,6 +17,10 @@ task :default do
   puts "\t* Updates all the subproject submodules to point to [version]"
   puts "\t* Tags each subproject with [version] (but doesn't push)"
   puts
+  puts "nancy:test_subprojects"
+  puts
+  puts "\t* Builds all subprojects and executes their tests"
+  puts
   puts "nancy:push_subprojects"
   puts
   puts "\t* Pushes all the updated subprojects"
@@ -122,6 +126,19 @@ namespace :nancy do
 
       Git.commit_all "Updated submodule to tag: v#{args.version}"
       Git.tag "v#{args.version}", false, "Tagged v#{args.version}"
+    end
+  end
+
+  desc "Builds and runs tests for all subprojects"
+  task :test_subprojects do
+    puts "Building and testing subprojects.."
+
+    SUB_PROJECTS.each do |project|
+      Dir.logged_chdir get_project_directory(project) do
+        puts "Building and testing: #{project}"
+
+        Executor.execute_command("rake xunit")
+      end
     end
   end
 
