@@ -9,7 +9,7 @@ task :default do
   puts
   puts "** Usage **"
   puts
-  puts "prep_release[version]"
+  puts "nancy:prep_release[version]"
   puts
   puts "\t* Grabs all the projects from GitHub"
   puts "\t* Updates SharedAssemblyInfo with [version]"
@@ -17,15 +17,15 @@ task :default do
   puts "\t* Updates all the subproject submodules to point to [version]"
   puts "\t* Tags each subproject with [version] (but doesn't push)"
   puts
-  puts "push_subprojects"
+  puts "nancy:push_subprojects"
   puts
   puts "\t* Pushes all the updated subprojects"
   puts
-  puts "build_nugets"
+  puts "nancy:build_nugets"
   puts
   puts "\t* Builds nugets for Nancy and all subprojects"
   puts
-  puts "push_nugets[api_key]"
+  puts "nancy:push_nugets[api_key]"
   puts
   puts "\t* Pushes and publishes nugets for Nancy and all subprojects"
   puts "\t  using the given [api_key]"
