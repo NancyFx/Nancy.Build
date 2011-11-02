@@ -78,6 +78,27 @@ namespace :nancy do
     end
   end
 
+  desc "Updates all sub project submodules to point at master"
+  task :fix_submodules do
+    puts "Fixing all submodules to point to master"
+
+     Dir.logged_chdir WORKING_DIRECTORY do
+      SUB_PROJECTS.each do |project|
+        Dir.logged_chdir project do
+          Git.prep_submodules rescue nil
+
+          Dir.logged_chdir 'dependencies/nancy' do
+            Git.checkout 'master'
+          end
+
+          Git.add '.'
+          Git.commit 'Updated submodule'
+          Git.push 'origin master'
+        end
+      end
+    end
+  end
+
   desc "Cleans up (deletes!) the working directory"
   task :clean_working do
     puts "Deleting working folder" if File.exists? WORKING_DIRECTORY
