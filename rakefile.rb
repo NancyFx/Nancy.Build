@@ -42,14 +42,20 @@ task :default do
 end
 
 namespace :nancy do
-  BASE_GITHUB_PATH = 'git@github.com:grumpydev/'
+  BASE_GITHUB_PATH = 'git@github.com:NancyFx/'
   SHARED_ASSEMBLY_INFO = 'src/SharedAssemblyInfo.cs'
   WORKING_DIRECTORY = 'Working'
   NANCY_DIRECTORY = "#{WORKING_DIRECTORY}/Nancy"
 
   SUB_PROJECTS = [
+      'Nancy.Bootstrappers.Autofac',
+      'Nancy.Bootstrappers.Ninject',
       'Nancy.Bootstrappers.StructureMap',
-      'Nancy.Bootstrappers.Unity'
+      'Nancy.Bootstrappers.Unity',
+      'Nancy.Bootstrappers.Windsor',
+      'Nancy.SassAndCoffee',
+      'Nancy.Serialization.ProtBuf',
+      'Nancy.Serialization.ServiceStack'
   ]
 
   Dir.class_eval do
