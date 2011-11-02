@@ -34,6 +34,10 @@ task :default do
   puts "\t* Pushes and publishes nugets for Nancy and all subprojects"
   puts "\t  using the given [api_key]"
   puts
+  puts "nancy:clean_working"
+  puts
+  puts "\t* Cleans (removes) the working directory once done"
+  puts
   Rake::Task['nancy:dump_config'].invoke
 end
 
@@ -68,10 +72,14 @@ namespace :nancy do
     end
   end
 
-  desc "Creates the working directory and gets projects from GitHub"
-  task :get_projects do
+  desc "Cleans up (deletes!) the working directory"
+  task :clean_working do
     puts "Deleting working folder" if File.exists? WORKING_DIRECTORY
     FileUtils.rm_rf(WORKING_DIRECTORY)
+  end
+
+  desc "Creates the working directory and gets projects from GitHub"
+  task :get_projects => :clean_working do
     Dir.mkdir(WORKING_DIRECTORY)
 
     Dir.logged_chdir WORKING_DIRECTORY do
