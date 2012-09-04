@@ -55,8 +55,8 @@ namespace :nancy do
       'Nancy.Bootstrappers.Windsor',
       'Nancy.SassAndCoffee',
       'Nancy.Serialization.ProtBuf',
-      'Nancy.Serialization.ServiceStack'
-      'Nancy.Serialization.JsonNet',
+      'Nancy.Serialization.ServiceStack',
+      'Nancy.Serialization.JsonNet'
   ]
 
   Dir.class_eval do
