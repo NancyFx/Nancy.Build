@@ -38,6 +38,9 @@ task :default do
   puts
   puts "\t* Cleans (removes) the working directory once done"
   puts
+  puts "nancy:set_locale"
+  puts "\t* Sets the locale with chcp.com to prevent Win build errors"
+  puts
   Rake::Task['nancy:dump_config'].invoke
 end
 
@@ -235,6 +238,11 @@ namespace :nancy do
       asm.input_file = SHARED_ASSEMBLY_INFO
       asm.version = args.version if !args.version.nil?
       asm.output_file = SHARED_ASSEMBLY_INFO
+  end
+
+  desc "Sets the locale using CHCP to avoid build errors on Windows"
+  task :set_locale do
+        Executor.execute_command("chcp.com 65001")
   end
 
   def get_git_url(project)
