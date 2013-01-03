@@ -1,5 +1,6 @@
 require './git'
 require './executor'
+require './customassemblyinfo'
 require 'rubygems'
 require 'albacore'
 require 'FileUtils'
@@ -233,9 +234,10 @@ namespace :nancy do
   end
 
   desc "Updates #{SHARED_ASSEMBLY_INFO} version"
-  assemblyinfo :update_version, :version do |asm, args|
+  customassemblyinfo :update_version, :version do |asm, args|
       asm.input_file = SHARED_ASSEMBLY_INFO
       asm.version = args.version if !args.version.nil?
+      asm.assembly_informational_version = args.version if !args.version.nil?
       asm.output_file = SHARED_ASSEMBLY_INFO
   end
 
