@@ -147,6 +147,7 @@ namespace :nancy do
       Git.commit("Updated SharedAssemblyInfo to v#{args.version}")
 
       Git.tag "v#{args.version}", false, "Tagged v#{args.version}"
+      Git.push 'origin master'
       Git.push_tags
     end
   end
