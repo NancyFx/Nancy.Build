@@ -3,20 +3,21 @@ require './executor'
 require './customassemblyinfo'
 require 'rubygems'
 require 'albacore'
-require 'FileUtils'
+require 'fileutils'
 
 task :default do
   puts "Nancy Release Script"
   puts
   puts "** Usage **"
   puts
-  puts "nancy:prep_release[version]"
+  puts "nancy:prep_release[version,label]"
   puts
+  puts "\t* Version is the version number, label is an optional argument eg. RC1"
   puts "\t* Grabs all the projects from GitHub"
-  puts "\t* Updates SharedAssemblyInfo with [version]"
-  puts "\t* Tags Nancy with [version] and pushes"
-  puts "\t* Updates all the subproject submodules to point to [version]"
-  puts "\t* Tags each subproject with [version] (but doesn't push)"
+  puts "\t* Updates SharedAssemblyInfo with [version,label]"
+  puts "\t* Tags Nancy with [version,label] and pushes"
+  puts "\t* Updates all the subproject submodules to point to [version,label]"
+  puts "\t* Tags each subproject with [version,label] (but doesn't push)"
   puts
   puts "nancy:test_subprojects"
   puts
@@ -47,7 +48,7 @@ end
 
 namespace :nancy do
   BASE_GITHUB_PATH = 'git@github.com:NancyFx/'
-  SHARED_ASSEMBLY_INFO = 'src/SharedAssemblyInfo.cs'
+  SHARED_ASSEMBLY_INFO = 'SharedAssemblyInfo.cs'
   WORKING_DIRECTORY = 'Working'
   NANCY_DIRECTORY = "#{WORKING_DIRECTORY}/Nancy"
 
@@ -124,36 +125,43 @@ namespace :nancy do
   end
 
   desc "Prepares a release"
-  task :prep_release, [:version] => [:get_projects] do |task, args|
+  task :prep_release, [:version, :label] => [:get_projects] do |task, args|
     if !args.version.nil?
-      puts "Prepping #{args.version}"
+      version_info = args.version if !args.version.nil? 
+      version_info += "-" + args.label if !args.label.nil?
+      puts "Prepping #{version_info}"
 
-      Rake::Task['nancy:tag_nancy'].invoke(args.version)
+      Rake::Task['nancy:tag_nancy'].invoke(args.version, args.label)
 
       puts "Updating sub projects.."
       SUB_PROJECTS.each do |project|
         Rake::Task['nancy:update_project'].reenable
-        Rake::Task['nancy:update_project'].invoke(project, args.version)
+        Rake::Task['nancy:update_project'].invoke(project, args.version, args.label)
       end
     end
   end
 
-  task :tag_nancy, :version do |task, args|
-    puts "Updating Nancy version to v#{args.version} and creating tag"
+  task :tag_nancy, [:version, :label] do |task, args|
+    version_info = args.version if !args.version.nil? 
+    version_info += "-" + args.label if !args.label.nil?
+    puts "Updating Nancy version to v#{version_info} and creating tag"
 
     Dir.logged_chdir NANCY_DIRECTORY do
-      Rake::Task['nancy:update_version'].invoke(args.version)
+      Rake::Task['nancy:update_version'].invoke(args.version, args.label)
       Git.add(SHARED_ASSEMBLY_INFO)
-      Git.commit("Updated SharedAssemblyInfo to v#{args.version}")
+      
+      Git.commit("Updated SharedAssemblyInfo to v#{version_info}")
 
-      Git.tag "v#{args.version}", false, "Tagged v#{args.version}"
+      Git.tag "v#{version_info}", false, "Tagged v#{version_info}"
       Git.push 'origin master'
       Git.push_tags
     end
   end
 
-  task :update_project, :project, :version do |task, args|
-    puts "Updating: #{args.project} to v#{args.version}"
+  task :update_project, [:project, :version, :label] do |task, args|
+    version_info = args.version if !args.version.nil? 
+    version_info += "-" + args.label if !args.label.nil?
+    puts "Updating: #{args.project} to v#{version_info}"
 
     Dir.logged_chdir get_project_directory(args.project) do
       Git.prep_submodules
@@ -161,11 +169,11 @@ namespace :nancy do
       Dir.logged_chdir 'dependencies/Nancy' do
         Git.checkout 'master'
         Git.pull
-        Git.checkout "v#{args.version}"
+        Git.checkout "v#{version_info}"
       end
 
-      Git.commit_all "Updated submodule to tag: v#{args.version}"
-      Git.tag "v#{args.version}", false, "Tagged v#{args.version}"
+      Git.commit_all "Updated submodule to tag: v#{version_info}"
+      Git.tag "v#{version_info}", false, "Tagged v#{version_info}"
     end
   end
 
@@ -235,10 +243,12 @@ namespace :nancy do
   end
 
   desc "Updates #{SHARED_ASSEMBLY_INFO} version"
-  customassemblyinfo :update_version, :version do |asm, args|
+  customassemblyinfo :update_version, [:version, :label] do |asm, args|
       asm.input_file = SHARED_ASSEMBLY_INFO
       asm.version = args.version if !args.version.nil?
-      asm.assembly_informational_version = args.version if !args.version.nil?
+      informational_version = args.version if !args.version.nil? 
+      informational_version += "-" + args.label if !args.label.nil?
+      asm.assembly_informational_version = informational_version
       asm.output_file = SHARED_ASSEMBLY_INFO
   end
 
