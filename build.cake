@@ -14,12 +14,12 @@ var SUB_PROJECTS = new List<string>{
       "Nancy",
       "Nancy.Bootstrappers.Autofac",
       "Nancy.Bootstrappers.Ninject",
-      // "Nancy.Bootstrappers.StructureMap",
-      // "Nancy.Bootstrappers.Unity",
-      // "Nancy.Bootstrappers.Windsor",
-      // "Nancy.Serialization.ProtBuf",
-      // "Nancy.Serialization.ServiceStack",
-      // "Nancy.Serialization.JsonNet"
+      "Nancy.Bootstrappers.StructureMap",
+      "Nancy.Bootstrappers.Unity",
+      "Nancy.Bootstrappers.Windsor",
+      "Nancy.Serialization.ProtBuf",
+      "Nancy.Serialization.ServiceStack",
+      "Nancy.Serialization.JsonNet"
   }; 
 
 Task("Package-Nuget")
