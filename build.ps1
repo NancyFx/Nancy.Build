@@ -48,6 +48,8 @@ Param(
     [Alias("DryRun","Noop")]
     [switch]$WhatIf,
     [switch]$SkipToolPackageRestore,
+    [string]$ApiKey,
+    [string]$Source,
     [Parameter(Position=0,Mandatory=$false,ValueFromRemainingArguments=$true)]
     [string[]]$ScriptArgs
 )
@@ -167,5 +169,5 @@ if (!(Test-Path $CAKE_EXE)) {
 
 # Start Cake
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -targetversion=`"$TargetVersion`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" $UseDryRun $UseExperimental $ScriptArgs"
+Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -targetversion=`"$TargetVersion`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -apikey=`"$ApiKey`" -source=`"$source`" $UseDryRun $UseExperimental $ScriptArgs"
 exit $LASTEXITCODE
