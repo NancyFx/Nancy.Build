@@ -7,7 +7,7 @@ var nugetapikey = Argument<string>("apikey", "");
 var nogit = Argument<bool>("nogit", false);
 var source = Argument<string>("source", null);
 
-var BASE_GITHUB_PATH = "git@github.com:NancyFx/";
+var BASE_GITHUB_PATH = "git@github.com:NancyFx";
 var WORKING_DIRECTORY = "Working";
 
 var SUB_PROJECTS = new List<string>{
