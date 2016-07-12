@@ -52,6 +52,42 @@ Param(
     [string[]]$ScriptArgs
 )
 
+Function Install-Dotnet()
+{
+    # Prepare the dotnet CLI folder
+    $env:DOTNET_INSTALL_DIR="$(Convert-Path "$PSScriptRoot")\.dotnet\win7-x64"
+    if (!(Test-Path $env:DOTNET_INSTALL_DIR))
+    {
+      mkdir $env:DOTNET_INSTALL_DIR | Out-Null
+    }
+
+	# Download the dotnet CLI install script
+    if (!(Test-Path .\dotnet\install.ps1))
+    {
+      Write-Output "Downloading version 1.0.0-preview2 of Dotnet CLI installer..."
+      Invoke-WebRequest "https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview2/scripts/obtain/dotnet-install.ps1" -OutFile ".\.dotnet\dotnet-install.ps1"
+    }
+
+    # Run the dotnet CLI install
+    Write-Output "Installing Dotnet CLI version 1.0.0-preview2-003121..."
+    & .\.dotnet\dotnet-install.ps1 -Channel "preview" -Version "1.0.0-preview2-003121" -InstallDir "$env:DOTNET_INSTALL_DIR"
+
+    # Add the dotnet folder path to the process. This gets skipped
+    # by Install-DotNetCli if it's already installed.
+    Remove-PathVariable $env:DOTNET_INSTALL_DIR
+    $env:PATH = "$env:DOTNET_INSTALL_DIR;$env:PATH"
+}
+
+Function Remove-PathVariable([string]$VariableToRemove)
+{
+  $path = [Environment]::GetEnvironmentVariable("PATH", "User")
+  $newItems = $path.Split(';') | Where-Object { $_.ToString() -inotlike $VariableToRemove }
+  [Environment]::SetEnvironmentVariable("PATH", [System.String]::Join(';', $newItems), "User")
+  $path = [Environment]::GetEnvironmentVariable("PATH", "Process")
+  $newItems = $path.Split(';') | Where-Object { $_.ToString() -inotlike $VariableToRemove }
+  [Environment]::SetEnvironmentVariable("PATH", [System.String]::Join(';', $newItems), "Process")
+}
+
 Write-Host "Preparing to run build script..."
 
 $PSScriptRoot = split-path -parent $MyInvocation.MyCommand.Definition;
@@ -60,6 +96,9 @@ $NUGET_EXE = Join-Path $TOOLS_DIR "nuget.exe"
 $NUGET_URL = "http://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
 $CAKE_VERSION = "0.13.0"
 $CAKE_EXE = Join-Path $TOOLS_DIR "Cake.$($CAKE_VERSION)/Cake.exe"
+
+# Install Dotnet CLI.
+Install-Dotnet
 
 # Should we use the new Roslyn?
 $UseExperimental = "";
