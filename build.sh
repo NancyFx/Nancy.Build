@@ -10,9 +10,8 @@ SCRIPT_NAME="build.cake"
 TOOLS_DIR="tools"
 NUGET_EXE="$TOOLS_DIR/nuget.exe"
 NUGET_URL="http://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
-CAKE_VERSION="0.13.0"
+CAKE_VERSION="0.16.0"
 CAKE_PATH="$TOOLS_DIR/Cake.$CAKE_VERSION/Cake.exe"
-PACKAGES_CONFIG="$TOOLS_DIR/packages.config"
 
 SCRIPT_ARGUMENTS=()
 
