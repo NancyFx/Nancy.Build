@@ -20,16 +20,16 @@ var SUB_PROJECTS = new List<string>{
       "Nancy.Serialization.ProtBuf",
       "Nancy.Serialization.ServiceStack",
       "Nancy.Serialization.JsonNet"
-  }; 
+  };
 
 Task("Package-Nuget")
   .Does(() =>
 {
   SUB_PROJECTS.ForEach(project => {
     LogInfo("Packaging Nuget for : "+ project);
-    CakeExecuteScript(GetProjectDirectory(project, WORKING_DIRECTORY) + "/build.cake", new CakeSettings{ Arguments = new Dictionary<string, string>{{"target", "Package-NuGet"}}});   
+    CakeExecuteScript(GetProjectDirectory(project, WORKING_DIRECTORY) + "/build.cake", new CakeSettings{ Arguments = new Dictionary<string, string>{{"target", "Package-NuGet"}}});
   });
-   
+
 });
 
 Task("Publish-Nuget")
@@ -38,28 +38,31 @@ Task("Publish-Nuget")
   if(string.IsNullOrWhiteSpace(nugetapikey)){
     throw new CakeException("No NuGet API key provided.");
    }
-  
+
   SUB_PROJECTS.ForEach(project => {
     LogInfo("Packaging Nuget for : "+ project);
-    CakeExecuteScript(GetProjectDirectory(project, WORKING_DIRECTORY) + "/build.cake", new CakeSettings{ Arguments = new Dictionary<string, string>{{"target", "Publish-NuGet"}, {"apikey",nugetapikey}, {"source", source}}});   
+    CakeExecuteScript(GetProjectDirectory(project, WORKING_DIRECTORY) + "/build.cake", new CakeSettings{ Arguments = new Dictionary<string, string>{{"target", "Publish-NuGet"}, {"apikey",nugetapikey}, {"source", source}}});
   });
-   
+
 });
 
 Task("Update-Projects")
 .Description("Updates all sub project submodules")
 .Does(() =>
 {
-  SUB_PROJECTS.Skip(1).ToList().ForEach(project => {
-    LogInfo(string.Format("Updating: {0} to v#{1}",project,version));
-    var dir = GetProjectDirectory(project,WORKING_DIRECTORY);
-    PrepSubModules(dir, nogit);
-    ExecuteGit(dir+"/dependencies/Nancy","checkout 'master'", nogit);
-    ExecuteGit(dir+"/dependencies/Nancy","pull", nogit);
-    ExecuteGit(dir+"/dependencies/Nancy",string.Format("checkout v{0}",version), nogit);
-    ExecuteGit(dir,string.Format("commit -am \"Updated submodule to tag: v{0}\"",version), nogit);
-    ExecuteGit(dir,string.Format("tag v{0}",version), nogit);
-  });
+    SUB_PROJECTS.Skip(1).ToList().ForEach(project => {
+        LogInfo(string.Format("Updating: {0} to v{1}", project, version));
+
+        var dir = GetProjectDirectory(project,WORKING_DIRECTORY);
+
+        PrepSubModules(dir, nogit);
+
+        ExecuteGit(dir + "/dependencies/Nancy", "fetch --tags", nogit);
+        ExecuteGit(dir + "/dependencies/Nancy", string.Format("checkout v{0}", version), nogit);
+
+        ExecuteGit(dir, string.Format("commit -am \"Updated submodule to v{0}\"", version), nogit);
+        ExecuteGit(dir, string.Format("tag -a v{0} -m \"Tagged v{0}\"", version), nogit);
+    });
 });
 
 Task("Get-Projects")
@@ -83,7 +86,7 @@ Task("Test-Projects")
 {
   SUB_PROJECTS.ForEach(project => {
     LogInfo("Running test for : " + project);
-    CakeExecuteScript(GetProjectDirectory(project, WORKING_DIRECTORY) + "/build.cake", new CakeSettings{ Arguments = new Dictionary<string, string>{{"target", "Test"}}});   
+    CakeExecuteScript(GetProjectDirectory(project, WORKING_DIRECTORY) + "/build.cake", new CakeSettings{ Arguments = new Dictionary<string, string>{{"target", "Test"}}});
   });
 });
 
@@ -105,15 +108,15 @@ Task("Prepare-Release")
 
 Task("Prepare-Release-Nancy")
 .Description("Sets the Nancy version that all sub repos depend on")
-.Does(() => 
+.Does(() =>
 {
-  CakeExecuteScript(GetProjectDirectory("Nancy", WORKING_DIRECTORY) + "/build.cake", new CakeSettings{ Arguments = new Dictionary<string, string>{{"target", "Prepare-Release"},{"targetversion", version},{"nogit", nogit.ToString()}}});   
+  CakeExecuteScript(GetProjectDirectory("Nancy", WORKING_DIRECTORY) + "/build.cake", new CakeSettings{ Arguments = new Dictionary<string, string>{{"target", "Prepare-Release"},{"targetversion", version},{"nogit", nogit.ToString()}}});
 });
 
 Task("Default")
     .IsDependentOn("Get-Projects")
     .IsDependentOn("Test-Projects");
- 
+
 Task("Push-SubProjects")
  .Does(() => {
     SUB_PROJECTS.Skip(1).ToList().ForEach(project => {
@@ -121,8 +124,8 @@ Task("Push-SubProjects")
       ExecuteGit(GetProjectDirectory(project, WORKING_DIRECTORY),"push origin master", nogit);
       ExecuteGit(GetProjectDirectory(project, WORKING_DIRECTORY),"push --tags", nogit);
     });
-});   
-	
+});
+
 RunTarget(target);
 
 public string GetProjectGitUrl(string project, string url)
@@ -138,7 +141,7 @@ public string GetProjectDirectory(string project, string dir)
 public void UpdateProjectJsonVersion(string version, FilePathCollection filePaths)
 {
   LogInfo("Setting version to "+ version);
-  foreach (var file in filePaths) 
+  foreach (var file in filePaths)
   {
     var project = Newtonsoft.Json.Linq.JObject.Parse(
       System.IO.File.ReadAllText(file.FullPath, Encoding.UTF8));
@@ -161,7 +164,7 @@ public void ExecuteGit(string workingDir, string command, bool nogit)
   {
     Console.WriteLine("Executing git " + command + " in " + workingDir);
   }
-  else 
+  else
   {
     StartProcess("git",new ProcessSettings {
        Arguments = string.Format("{0}", command),
