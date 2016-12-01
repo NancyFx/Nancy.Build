@@ -1,19 +1,36 @@
-# README
+# Description
 
-Release procedures:
+Cross-platform build script, using [CAKE](http://cakebuild.net/), which is used to release a new Nancy version. The script will update the main Nancy repository and all of the sub-repositories to the designed version and build & publish the Nuget packages.
 
-`./build.sh --target Prepare-Release --targetversion=X.X.X` - This will get all repos, set the Nancy version and push back to Nancy repo, update all sub repos with new Nancy version
+The build script can be invoked either with `build.sh` (maxOS/Linux) or `build.ps1` (Windows)
 
-`./build.sh --target Test-Projects` -  This will compile all repos and run tests
+`build.[ps1|sh] --target="name-of-task" [--additional-task-parameters]`
 
-`./build.sh --target Push-SubProjects` - This will push all the updated sub repos
+## Available tasks
 
-`./build.sh --target Package-NuGet` -- This will create the *.nupkgs
+| Target           | Description                                                                                                                                                                                              |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Prepare-Release  | Fetches all repositories, set the Nancy version and push back to Nancy repository, updates all sub-repositories to point to the tagged Nancy version. Requires `--targetversion="x.y.z"` to be passed in |
+| Test-Projects    | This will compile all repositories and run tests                                                                                                                                                         |
+| Push-SubProjects | Pushes all the updated sub-repositories                                                                                                                                                                  |
+| Package-NuGet    | Creates the `*.nupkgs`. Requires `-apikey="xxx"` and `--source="xxx"` to be passed in                                                                                                                    |
+| Publish-Nuget    | Pushes the `*.nupkgs` to a source eg. MyGet/NuGet                                                                                                                                                        |
+| Clean            | Remove the contents of the working directory                                                                                                                                                             |
 
-`./build.sh --target Publish-Nuget --apikey=XXX --source=https://www.nuget.org/api/v2/package` -- This will push the nupkgs to a source eg. MyGet/NuGet
+## Release procedure
 
-`./build.sh --target Clean` -- This will remove the contents of the working directory
+Execute the tasks in the following order:
 
-To prevent any git commands running add the `--nogit=true` when calling the build script. For example `./build.sh --target Prepare-Release --targetversion=X.X.X --nogit=true`
+- --target="Prepare-Release" --targetversion="X.X.X"
 
-**NOTE:** You can replace `build.sh` with `build.ps1` if on Windows
+- --target="Test-Projects"
+
+- --target="Push-SubProjects"
+
+- --target="Package-NuGet"
+
+- --target="Publish-Nuget" --apikey="XXX" --source="https://www.nuget.org/api/v2/package"
+
+- --target="Clean"
+
+**NOTE** To prevent any Git commands running add the `--nogit="true"` flag when calling the build script.

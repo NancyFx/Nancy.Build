@@ -1,60 +1,57 @@
-#!/bin/bash
-echo "Preparing to run build script..."
+#!/usr/bin/env bash
 
-TARGET="default"
-VERBOSITY="verbose"
-DRYRUN=
-SHOW_VERSION=false
+# Define directories.
+SCRIPT_DIR=$PWD
+TOOLS_DIR=$SCRIPT_DIR/tools
+CAKE_VERSION=0.17.0
+CAKE_DLL=$TOOLS_DIR/Cake.CoreCLR.$CAKE_VERSION/Cake.dll
+DOTNET_VERSION=1.0.0-preview2-003131
+DOTNET_INSTRALL_URI=https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview2/scripts/obtain/dotnet-install.sh
 
-SCRIPT_NAME="build.cake"
-TOOLS_DIR="tools"
-NUGET_EXE="$TOOLS_DIR/nuget.exe"
-NUGET_URL="http://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
-CAKE_VERSION="0.16.0"
-CAKE_PATH="$TOOLS_DIR/Cake.$CAKE_VERSION/Cake.exe"
+# Make sure the tools folder exist.
+if [ ! -d "$TOOLS_DIR" ]; then
+  mkdir "$TOOLS_DIR"
+fi
 
-SCRIPT_ARGUMENTS=()
+###########################################################################
+# INSTALL .NET CORE CLI
+###########################################################################
 
-# Parse arguments.
-for i in "$@"; do
-    case $1 in
-        --target ) TARGET="$2"; shift ;;
-        -s|--script) SCRIPT_NAME="$2"; shift ;;
-        -v|--verbosity) VERBOSITY="$2"; shift ;;
-        -d|--dryrun) DRYRUN="-dryrun" ;;
-        --version) SHOW_VERSION=true ;;
-        --) shift; SCRIPT_ARGUMENTS+=("$@"); break ;;
-        *) SCRIPT_ARGUMENTS+=("$1") ;;
-    esac
-    shift
-done
+echo "Installing .NET CLI..."
+if [ ! -d "$SCRIPT_DIR/.dotnet" ]; then
+  mkdir "$SCRIPT_DIR/.dotnet"
+fi
 
-function installnuget() {
-    echo "Checking for nuget"
-    if ! [ -x "$(command -v nuget)" ] ; then
-        echo "Installing nuget to $TOOLS_DIR"
-        wget -O $TOOLS_DIR $NUGET_URL
-        export PATH=$TOOLS_DIR:$PATH
+curl -Lsfo "$SCRIPT_DIR/.dotnet/dotnet-install.sh" $DOTNET_INSTRALL_URI
+sudo bash "$SCRIPT_DIR/.dotnet/dotnet-install.sh" -c preview --version $DOTNET_VERSION --install-dir .dotnet --no-path
+
+export PATH="$SCRIPT_DIR/.dotnet":$PATH
+export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+"$SCRIPT_DIR/.dotnet/dotnet" --info
+
+###########################################################################
+# INSTALL CAKE
+###########################################################################
+
+if [ ! -f "$CAKE_DLL" ]; then
+    curl -Lsfo "$TOOLS_DIR/Cake.CoreCLR.zip" "https://www.nuget.org/api/v2/package/Cake.CoreCLR/$CAKE_VERSION" && unzip -q "$TOOLS_DIR/Cake.CoreCLR.zip" -d "$TOOLS_DIR/Cake.CoreCLR.$CAKE_VERSION" && rm -f "$TOOLS_DIR/Cake.CoreCLR.zip"
+    if [ $? -ne 0 ]; then
+        echo "An error occured while installing Cake."
+        exit 1
     fi
-}
+fi
 
-function installcake() {
-  echo "Checking for Cake at "$CAKE_PATH
-  if [ ! -f $CAKE_PATH ]; then
-    echo "Installing Cake"
-    nuget install Cake -Version $CAKE_VERSION -OutputDirectory $TOOLS_DIR
-  fi
-}
+# Make sure that Cake has been installed.
+if [ ! -f "$CAKE_DLL" ]; then
+    echo "Could not find Cake.exe at '$CAKE_DLL'."
+    exit 1
+fi
 
-function runbuildscript() {
-  if $SHOW_VERSION; then
-      mono $CAKE_PATH -version
-  else
-      echo "Executing "mono $CAKE_PATH $SCRIPT_NAME -target=$TARGET -verbosity=$VERBOSITY $DRYRUN "${SCRIPT_ARGUMENTS[@]}"
-      mono $CAKE_PATH $SCRIPT_NAME -target=$TARGET -verbosity=$VERBOSITY $DRYRUN "${SCRIPT_ARGUMENTS[@]}"
-  fi
-}
+###########################################################################
+# RUN BUILD SCRIPT
+###########################################################################
 
-installnuget
-installcake
-runbuildscript
+# Start Cake
+exec dotnet "$CAKE_DLL" "$@"
