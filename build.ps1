@@ -1,55 +1,24 @@
-##########################################################################
-# This is the Cake bootstrapper script for PowerShell.
-# This file was downloaded from https://github.com/cake-build/resources
-# Feel free to change this file to fit your needs.
-##########################################################################
+Write-Host "Preparing to run build script..."
 
-<#
+$PSScriptRoot = split-path -parent $MyInvocation.MyCommand.Definition;
 
-.SYNOPSIS
-This is a Powershell script to bootstrap a Cake build.
+$TOOLS_DIR = Join-Path $PSScriptRoot "tools"
+$NUGET_EXE = Join-Path $TOOLS_DIR "nuget.exe"
+$NUGET_URL = "http://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
+$CAKE_VERSION = "0.17.0"
+#$CAKE_EXE = Join-Path $TOOLS_DIR "Cake.$($CAKE_VERSION)/Cake.exe"
+$CAKE_EXE = Join-Path $TOOLS_DIR "Cake.CoreCLR.$CAKE_VERSION/Cake.dll"
+$env:PATH = "$TOOLS_DIR;$env:PATH"
 
-.DESCRIPTION
-This Powershell script will download NuGet if missing, restore NuGet tools (including Cake)
-and execute your Cake build script with the parameters you provide.
+# Make sure tools folder exists
+if ((Test-Path $PSScriptRoot) -and !(Test-Path $TOOLS_DIR)) {
+    Write-Verbose -Message "Creating tools directory..."
+    New-Item -Path $TOOLS_DIR -Type directory | out-null
+}
 
-.PARAMETER Script
-The build script to execute.
-.PARAMETER Target
-The build script target to run.
-.PARAMETER Configuration
-The build configuration to use.
-.PARAMETER Verbosity
-Specifies the amount of information to be displayed.
-.PARAMETER Experimental
-Tells Cake to use the latest Roslyn release.
-.PARAMETER WhatIf
-Performs a dry run of the build script.
-No tasks will be executed.
-.PARAMETER ScriptArgs
-Remaining arguments are added here.
-
-.LINK
-http://cakebuild.net
-
-#>
-
-[CmdletBinding()]
-Param(
-    [string]$Script = "build.cake",
-    [string]$Target = "Default",
-    [string]$TargetVersion,
-    [string]$Configuration = "Release",
-    [ValidateSet("Quiet", "Minimal", "Normal", "Verbose", "Diagnostic")]
-    [string]$Verbosity = "Verbose",
-    [switch]$Experimental,
-    [Alias("DryRun","Noop")]
-    [switch]$WhatIf,
-    [string]$ApiKey,
-    [string]$Source,
-    [Parameter(Position=0,Mandatory=$false,ValueFromRemainingArguments=$true)]
-    [string[]]$ScriptArgs
-)
+###########################################################################
+# INSTALL .NET CORE CLI
+###########################################################################
 
 Function Install-Dotnet()
 {
@@ -63,13 +32,13 @@ Function Install-Dotnet()
 	# Download the dotnet CLI install script
     if (!(Test-Path .\dotnet\install.ps1))
     {
-      Write-Output "Downloading version 1.0.0-preview2 of Dotnet CLI installer..."
+      Write-Output "Downloading Dotnet CLI installer..."
       Invoke-WebRequest "https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview2/scripts/obtain/dotnet-install.ps1" -OutFile ".\.dotnet\dotnet-install.ps1"
     }
 
     # Run the dotnet CLI install
-    Write-Output "Installing Dotnet CLI version 1.0.0-preview2-003121..."
-    & .\.dotnet\dotnet-install.ps1 -Channel "preview" -Version "1.0.0-preview2-003121" -InstallDir "$env:DOTNET_INSTALL_DIR"
+    Write-Output "Installing Dotnet CLI ..."
+    & .\.dotnet\dotnet-install.ps1 -Channel "preview" -Version "1.0.0-preview2-003131" -InstallDir "$env:DOTNET_INSTALL_DIR"
 
     # Add the dotnet folder path to the process. This gets skipped
     # by Install-DotNetCli if it's already installed.
@@ -87,60 +56,32 @@ Function Remove-PathVariable([string]$VariableToRemove)
   [Environment]::SetEnvironmentVariable("PATH", [System.String]::Join(';', $newItems), "Process")
 }
 
-Write-Host "Preparing to run build script..."
-
-$PSScriptRoot = split-path -parent $MyInvocation.MyCommand.Definition;
-$TOOLS_DIR = Join-Path $PSScriptRoot "tools"
-$NUGET_EXE = Join-Path $TOOLS_DIR "nuget.exe"
-$NUGET_URL = "http://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
-$CAKE_VERSION = "0.16.0"
-$CAKE_EXE = Join-Path $TOOLS_DIR "Cake.$($CAKE_VERSION)/Cake.exe"
-$env:PATH = "$TOOLS_DIR;$env:PATH"
-# Install Dotnet CLI.
 Install-Dotnet
 
-# Should we use the new Roslyn?
-$UseExperimental = "";
-if($Experimental.IsPresent) {
-    Write-Verbose -Message "Using experimental version of Roslyn."
-    $UseExperimental = "-experimental"
-}
+###########################################################################
+# INSTALL CAKE
+###########################################################################
 
-# Is this a dry run?
-$UseDryRun = "";
-if($WhatIf.IsPresent) {
-    $UseDryRun = "-dryrun"
-}
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+Function Unzip
+{
+    param([string]$zipfile, [string]$outpath)
 
-# Make sure tools folder exists
-if ((Test-Path $PSScriptRoot) -and !(Test-Path $TOOLS_DIR)) {
-    Write-Verbose -Message "Creating tools directory..."
-    New-Item -Path $TOOLS_DIR -Type directory | out-null
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
 }
-
-# Try download NuGet.exe if not exists
-if (!(Test-Path $NUGET_EXE)) {
-    Write-Verbose -Message "Downloading NuGet.exe..."
-    try {
-        (New-Object System.Net.WebClient).DownloadFile($NUGET_URL, $NUGET_EXE)
-    } catch {
-        Throw "Could not download NuGet.exe."
-    }
-}
-
-# Save nuget.exe path to environment to be available to child processes
-$ENV:NUGET_EXE = $NUGET_EXE
 
 # Make sure Cake has been installed.
 if (!(Test-Path $CAKE_EXE)) {
-    Write-Verbose "Installing Cake..."
-    Invoke-Expression "&`"$NUGET_EXE`" install Cake -Version $CAKE_VERSION -OutputDirectory `"$TOOLS_DIR`"" | Out-Null;
-    if ($LASTEXITCODE -ne 0) {
-        Throw "An error occured while restoring Cake from NuGet."
-    }
+    Write-Host "Installing Cake..."
+    (New-Object System.Net.WebClient).DownloadFile("https://www.nuget.org/api/v2/package/Cake.CoreCLR/$CAKE_VERSION", "$TOOLS_DIR\Cake.CoreCLR.zip")
+    Unzip "$TOOLS_DIR\Cake.CoreCLR.zip" "$TOOLS_DIR/Cake.CoreCLR.$CAKE_VERSION"
+    Remove-Item "$TOOLS_DIR\Cake.CoreCLR.zip"
 }
 
-# Start Cake
+###########################################################################
+# RUN BUILD SCRIPT
+###########################################################################
+
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -targetversion=`"$TargetVersion`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -apikey=`"$ApiKey`" -source=`"$source`" $UseDryRun $UseExperimental $ScriptArgs"
+& dotnet "$CAKE_EXE" $args
 exit $LASTEXITCODE
