@@ -6,7 +6,6 @@ $TOOLS_DIR = Join-Path $PSScriptRoot "tools"
 $NUGET_EXE = Join-Path $TOOLS_DIR "nuget.exe"
 $NUGET_URL = "http://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
 $CAKE_VERSION = "0.17.0"
-#$CAKE_EXE = Join-Path $TOOLS_DIR "Cake.$($CAKE_VERSION)/Cake.exe"
 $CAKE_EXE = Join-Path $TOOLS_DIR "Cake.CoreCLR.$CAKE_VERSION/Cake.dll"
 $env:PATH = "$TOOLS_DIR;$env:PATH"
 
