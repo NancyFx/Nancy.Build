@@ -2,7 +2,7 @@
 
 Cross-platform build script, using [CAKE](http://cakebuild.net/), which is used to release a new Nancy version. The script will update the main Nancy repository and all of the sub-repositories to the designed version and build & publish the Nuget packages.
 
-The build script can be invoked either with `build.sh` (maxOS/Linux) or `build.ps1` (Windows)
+The build script can be invoked either with `build.sh` (macOS/Linux) or `build.ps1` (Windows)
 
 `build.[ps1|sh] --target="name-of-task" [--additional-task-parameters]`
 
