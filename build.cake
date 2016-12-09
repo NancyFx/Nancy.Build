@@ -35,7 +35,7 @@ Task("Package-Nuget")
         });
     });
 
-Task("Publish-Nuget")
+Task("Publish-NuGet")
     .Does(() =>
     {
         if(string.IsNullOrWhiteSpace(nugetapikey)){
@@ -48,7 +48,7 @@ Task("Publish-Nuget")
             var path = GetProjectDirectory(project, WORKING_DIRECTORY) + "/build.cake";
             var settings = GetCakeSettings(Context, new Dictionary<string, string> {
                 {"target", "Publish-NuGet"},
-                {"apikey",nugetapikey},
+                {"apikey", nugetapikey},
                 {"source", source}
             });
 
@@ -160,20 +160,6 @@ public string GetProjectGitUrl(string project, string url)
 public string GetProjectDirectory(string project, string dir)
 {
     return string.Format("./{0}/{1}", dir, project);
-}
-
-public void UpdateProjectJsonVersion(string version, FilePathCollection filePaths)
-{
-  LogInfo("Setting version to " + version);
-
-  foreach (var file in filePaths)
-  {
-    var project = System.IO.File.ReadAllText(file.FullPath, Encoding.UTF8);
-
-    project = System.Text.RegularExpressions.Regex.Replace(project, "(\"version\":\\s*)\".+\"", "$1\"" + version + "\"");
-
-    System.IO.File.WriteAllText(file.FullPath, project, Encoding.UTF8);
-  }
 }
 
 public void LogInfo(string message)
